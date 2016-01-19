@@ -49,15 +49,16 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, li
 #    'leleketang.middlewares.MyCustomSpiderMiddleware': 543,
 #}
 
-RETRY_TIMES = 1
-RETRY_HTTP_CODES = [500, 503, 504, 400, 403, 404, 408, 250]
+'''
+RETRY_TIMES = 3
+RETRY_HTTP_CODES = [500, 503, 504, 400, 403, 404, 408, 302, 250]
 DOWNLOADER_MIDDLEWARES = {
    # 'disease_qa_spider.middlewares.MyCustomDownloaderMiddleware': 543,
     'randomproxy.RandomProxy': 100,
     'scrapy.contrib.downloadermiddleware.httpproxy.HttpProxyMiddleware': 110,
 }
 PROXY_LIST = 'proxy_inuse.txt'
-
+'''
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html

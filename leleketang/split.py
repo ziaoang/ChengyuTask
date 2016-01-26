@@ -7,38 +7,49 @@ sys.setdefaultencoding("utf-8")
 import os
 from collections import defaultdict
 
-type = "xiaoxue"
 
-POOL = set()
-for line in open("statistic/%s.txt"%type):
+POOL = {}
+NOW = {}
+for line in open("statistic/all.txt"):
 	t = line.strip().split('\t')
 	cy, cnt = t[0], int(t[1])
-	if cnt >= 100:
-		POOL.add(cy)
+	if cnt >= 1000:
+		POOL[cy] = cnt
+		NOW[cy] = 0
 
-cy_paragraph = defaultdict(list)
-for filename in os.listdir("data_filter_seg/%s"%type):
-	print(filename)
-	content = open("data_filter_seg/%s/%s"%(type, filename)).read()
-	cy_list, zw_title, zw_content = content.strip().split("\n\n")
-	same_pool = set()
-	for cy in cy_list.strip().split(' '):
-		if cy in POOL:
-			same_pool.add(cy)
-	for paragraph in zw_content.split('\n'):
-		for cy in same_pool:
-			if cy in paragraph.strip().split("/ "):
-				cy_paragraph[cy].append(paragraph)
+df_train_big = open("data_filter_seg_merge_split/all_train_big.txt", 'w')
+df_train_small = open("data_filter_seg_merge_split/all_train_small.txt", 'w')
+df_test = open("data_filter_seg_merge_split/all_test.txt", 'w')
 
+lineNo = 0
+for line in open("data_filter_seg_merge/all_suffled.txt"):
+	lineNo += 1
+	if lineNo % 100000 == 0:
+		print(lineNo)
+	t = line.strip().split("/ ")
+	cnt = defaultdict(int)
+	for word in t:
+		if word in POOL:
+			cnt[word] += 1
+	if len(cnt) == 0: # not contain chengyu
+		df_train_big.write(line.strip()+'\n')
+		continue
+	isEnough = True
+	for word in cnt:
+		if NOW[word] < 0.8 * POOL[word]:
+			isEnough = False
+			break
+	if isEnough:
+		df_test.write(line.strip()+'\n')
+	else:
+		df_train_big.write(line.strip()+'\n')
+		df_train_small.write(line.strip()+'\n')
+	for word in cnt: # update NOW dict
+		NOW[word] += cnt[word]
 
-df_train = open("data_filter_seg_split/%s_train.txt"%type, 'w')
-for cy in cy_paragraph:
-	split_index = int(0.8 * len(cy_paragraph[cy]))
-	df_train.write("%s\t%s\n"%(cy, '\t'.join(cy_paragraph[cy][:split_index])))
-df_train.close()
-
-df_test = open("data_filter_seg_split/%s_test.txt"%type, 'w')
-for cy in cy_paragraph:
-	split_index = int(0.8 * len(cy_paragraph[cy]))
-	df_test.write("%s\t%s\n"%(cy, '\t'.join(cy_paragraph[cy][split_index:])))
+df_train_big.close()
+df_train_small.close()
 df_test.close()
+
+
+

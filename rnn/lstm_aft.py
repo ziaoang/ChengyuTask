@@ -15,10 +15,15 @@ from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 
 
+maxlen = 20
+filename_cy = "data/raw/all_statistic.txt"
+filename_train = "data/train_aft.txt"
+filename_test = "data/test_aft.txt"
+filename_model = "data/model/aft.model"
 
 def loadCy(filename_cy):
 	cys = set()
-	for line in open(filename):
+	for line in open(filename_cy):
 		t = line.strip().split('\t')
 		cy, cnt = t[0], int(t[1])
 		if cnt >= 1000:
@@ -39,7 +44,7 @@ def loadWord(filename_train, filename_test):
 	indices_word = dict((i+1, w) for i, w in enumerate(words))
 	return word_indices, indices_word
 
-def loadData(filename, cy_indices, word_indices, maxlen=20):
+def loadData(filename, cy_indices, word_indices, maxlen):
 	sentences = []
 	cys = []
 	for line in open(filename):
@@ -61,16 +66,16 @@ def loadData(filename, cy_indices, word_indices, maxlen=20):
 		y[i] = cy_indices[cys[i]]
 	return X, y
 
-
-filename_cy = "data/all_statistic.txt"
-filename_train = "data/pre_train.txt"
-filename_test = "data/pre_test.txt"
-
 print("Loading data...")
 cy_indices, indices_cy = loadCy(filename_cy)
 word_indices, indices_word = loadWord(filename_train, filename_test)
-X_train, y_train = loadData(filename_train, cy_indices, word_indices)
-X_train, y_train = loadData(filename_train, cy_indices, word_indices)
+X_train, y_train = loadData(filename_train, cy_indices, word_indices, maxlen)
+X_test, y_test = loadData(filename_test, cy_indices, word_indices, maxlen)
+
+print('X_train shape:', X_train.shape)
+print('y_train shape:', y_train.shape)
+print('X_test shape:', X_test.shape)
+print('y_test shape:', y_test.shape)
 
 print('Build model...')
 model = Sequential()
@@ -86,7 +91,7 @@ print("Train...")
 model.fit(X_train, y_train, batch_size=32, nb_epoch=1, show_accuracy=True)
 
 print("Save...")
-save_weights("data/1.model", overwrite=True)
+model.save_weights(filename_model, overwrite=True)
 
 print("Predict...")
 y_pred = model.predict_proba(X_test, batch_size=32)

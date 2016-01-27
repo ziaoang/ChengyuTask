@@ -6,7 +6,7 @@ sys.setdefaultencoding("utf-8")
 
 def loadStatistic():
 	cy_cnt = {}
-	for line in open("data/all_statistic.txt"):
+	for line in open("data/raw/all_statistic.txt"):
 		t = line.strip().split('\t')
 		cy, cnt = t[0], int(t[1])
 		if cnt >= 1000:
@@ -15,20 +15,27 @@ def loadStatistic():
 
 cy_cnt = loadStatistic()
 
-df = open("data/pre_train.txt", 'w')
-for line in open("data/all_train_small.txt"):
-	t = line.strip().split("/ ")
+def pre(t):
+	res = []
 	for cy in cy_cnt:
 		if cy in t:
 			cy_index = t.index(cy)
-			df.write("%s\n"%("/ ".join(t[:cy_index+1])))
-df.close()
+			res.append("/ ".join(t[:cy_index+1]))
+	return res
 
-df = open("data/pre_test.txt", 'w')
-for line in open("data/all_test.txt"):
-	t = line.strip().split("/ ")
-	for cy in cy_cnt:
-		if cy in t:
-			cy_index = t.index(cy)
-			df.write("%s\n"%("/ ".join(t[:cy_index+1])))
-df.close()
+def aft(t):
+	t.reverse()
+	return pre(t)
+
+for kind in ["train", "test"]:
+	df_pre = open("data/%s_pre.txt"%kind, 'w')
+	df_aft = open("data/%s_aft.txt"%kind, 'w')
+	for line in open("data/raw/all_%s.txt"%kind):
+		t = line.strip().split("/ ")
+		for content in pre(t):
+			df_pre.write(content+'\n')
+		for content in aft(t):
+			df_aft.write(content+'\n')
+	df_pre.close()
+	df_aft.close()
+

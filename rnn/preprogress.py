@@ -15,8 +15,17 @@ def loadStatistic():
 
 cy_cnt = loadStatistic()
 
-df = open("data/pre.txt", 'w')
+df = open("data/pre_train.txt", 'w')
 for line in open("data/all_train_small.txt"):
+	t = line.strip().split("/ ")
+	for cy in cy_cnt:
+		if cy in t:
+			cy_index = t.index(cy)
+			df.write("%s\n"%("/ ".join(t[:cy_index+1])))
+df.close()
+
+df = open("data/pre_test.txt", 'w')
+for line in open("data/all_test.txt"):
 	t = line.strip().split("/ ")
 	for cy in cy_cnt:
 		if cy in t:

@@ -12,7 +12,7 @@ try:
 	size = sys.argv[1] # big or small
 	method = sys.argv[2] # sg or cbow
 except:
-	print("size method")
+	print("size(big/small) method(sg/cbow)")
 	exit()
 
 window_size = 5
@@ -82,8 +82,8 @@ def loadParagraph(filename):
 		paragraphs.append(line.strip())
 	return paragraphs
 
-cy_dict = load_cy_dict()
-model = load_model()
+cy_dict = load_cy_dict(statistic_filename)
+model = load_model(model_filename)
 
 total = 0
 score = 0.0

@@ -14,12 +14,18 @@ from keras.layers.core import Dense, Dropout, Activation
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 
+try:
+	kind = sys.argv[1]
+except:
+	print("kind")
+	exit()
+
 
 maxlen = 20
 filename_cy = "data/raw/all_statistic.txt"
-filename_train = "data/train_aft.txt"
-filename_test = "data/test_aft.txt"
-filename_model = "data/model/aft.model"
+filename_train = "data/train_%s.txt"%kind
+filename_test = "data/test_%s.txt"%kind
+filename_model = "data/model/%s2.model"%kind
 
 def loadCy(filename_cy):
 	cys = set()
@@ -28,8 +34,8 @@ def loadCy(filename_cy):
 		cy, cnt = t[0], int(t[1])
 		if cnt >= 1000:
 			cys.add(cy)
-	cy_indices = dict((c, i+1) for i, c in enumerate(cys))
-	indices_cy = dict((i+1, c) for i, c in enumerate(cys))
+	cy_indices = dict((c, i) for i, c in enumerate(cys))
+	indices_cy = dict((i, c) for i, c in enumerate(cys))
 	return cy_indices, indices_cy
 
 def loadWord(filename_train, filename_test):
@@ -72,6 +78,8 @@ word_indices, indices_word = loadWord(filename_train, filename_test)
 X_train, y_train = loadData(filename_train, cy_indices, word_indices, maxlen)
 X_test, y_test = loadData(filename_test, cy_indices, word_indices, maxlen)
 
+y_train = np_utils.to_categorical(y_train, len(cy_indices))
+
 print('X_train shape:', X_train.shape)
 print('y_train shape:', y_train.shape)
 print('X_test shape:', X_test.shape)
@@ -79,30 +87,34 @@ print('y_test shape:', y_test.shape)
 
 print('Build model...')
 model = Sequential()
-model.add(Embedding(len(word_indices) + 1, 128, input_length=maxlen))
-model.add(LSTM(128))
-model.add(Dropout(0.5))
-model.add(Dense(1))
-model.add(Activation('sigmoid'))
+model.add(Embedding(len(word_indices) + 1, 256, input_length=maxlen))
+model.add(LSTM(256))
+model.add(Dense(len(cy_indices)))
+model.add(Activation("softmax"))
 
-model.compile(loss='categorical_crossentropy', optimizer='sgd', class_mode="categorical")
+model.compile(loss="categorical_crossentropy", optimizer="sgd", class_mode="categorical")
 
 print("Train...")
-model.fit(X_train, y_train, batch_size=32, nb_epoch=1, show_accuracy=True)
+model.fit(X_train, y_train, batch_size=32, nb_epoch=1)
 
 print("Save...")
 model.save_weights(filename_model, overwrite=True)
 
-print("Predict...")
-y_pred = model.predict_proba(X_test, batch_size=32)
+#print("Load...")
+#model.load_weights(filename_model)
 
-scroe = 0
+print("Predict...")
+y_pred = model.predict(X_test, batch_size=32)
+
+score = 0
 for i in range(len(y_pred)):
 	arr = []
 	for j in range(len(y_pred[i])):
 		arr.append([j, y_pred[i][j]])
 	arr.sort(key=lambda a:a[1], reverse=True)
 	arr = [a[0] for a in arr]
-	score += 1.0 / arr.index(y_test[i])
+	score += 1.0 / (arr.index(y_test[i])+1)
 
-print("%.4f"%score)
+print("%.4f"%(float(score)/len(y_pred)))
+
+

@@ -85,6 +85,7 @@ def loadParagraph(filename):
 cy_dict = load_cy_dict(statistic_filename)
 model = load_model(model_filename)
 
+example = []
 total = 0
 score = 0.0
 p1 = 0
@@ -100,6 +101,9 @@ for paragraph in paragraphs:
 		score += 1.0 / (result_cy.index(cy)+1)
 		if result_cy[0] == cy:
 			p1 += 1
+			example.append(paragraph)
+			example.append("%s\t%s"%(cy, " ".join(neighbor)))
+			example.append('-'*20)
 
 df = open(res_filename, 'w')
 df.write("nb_total: %d\n"%total)
@@ -107,4 +111,7 @@ df.write("score: %.4f\n"%score)
 df.write("nb_p1: %d\n"%p1)
 df.write("MRR: %.4f\n"%(score/float(total)))
 df.write("Precision: %.4f\n"%(p1/float(total)))
+df.write('-'*20 + '\n')
+for e in example:
+	df.write(e + '\n')
 df.close()

@@ -133,7 +133,7 @@ for i in range(len(y_pred)):
 		p1 += 1
 
 
-pen(filename_res, 'w')
+df = open(filename_res, 'w')
 df.write("nb_total: %d\n"%total)
 df.write("score: %.4f\n"%score)
 df.write("nb_p1: %d\n"%p1)

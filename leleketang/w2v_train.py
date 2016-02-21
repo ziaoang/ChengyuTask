@@ -10,7 +10,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 for type in ["big", "small"]:
 	# skip-gram
-	fname = "data_filter_seg_merge_split/w2v/all_vector_%s_sg.txt"%type
+	fname = "data_filter_seg_merge_split/w2v/all_vector_%s_sg_10.txt"%type
 	sentences = []
 	lineNo = 0
 	for line in open("data_filter_seg_merge_split/all_train_%s.txt"%type):
@@ -18,10 +18,10 @@ for type in ["big", "small"]:
 		if lineNo % 10000 == 0:
 			print(lineNo)
 		sentences.append(line.strip().split("/ "))
-	model = gensim.models.Word2Vec(sentences, min_count=1, size=200, window = 5, sg = 1)
+	model = gensim.models.Word2Vec(sentences, min_count=1, size=200, window = 10, sg = 1)
 	model.save(fname)
 	# cbow
-	fname = "data_filter_seg_merge_split/w2v/all_vector_%s_cbow.txt"%type
+	fname = "data_filter_seg_merge_split/w2v/all_vector_%s_cbow_10.txt"%type
 	sentences = []
 	lineNo = 0
 	for line in open("data_filter_seg_merge_split/all_train_%s.txt"%type):
@@ -29,6 +29,6 @@ for type in ["big", "small"]:
 		if lineNo % 10000 == 0:
 			print(lineNo)
 		sentences.append(line.strip().split("/ "))
-	model = gensim.models.Word2Vec(sentences, min_count=1, size=200, window = 5, sg = 0)
+	model = gensim.models.Word2Vec(sentences, min_count=1, size=200, window = 10, sg = 0)
 	model.save(fname)
 

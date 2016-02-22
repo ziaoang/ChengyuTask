@@ -8,11 +8,6 @@ import os
 from bs4 import BeautifulSoup
 
 
-def loadUserDict():
-	userdict = set()
-	for line in open("../userdict.txt"):
-		userdict.add(line.strip())
-	return userdict
 
 def extractTitleAndContent(html):
 	soup = BeautifulSoup(html)
@@ -25,25 +20,12 @@ def extractTitleAndContent(html):
 	return zw_title, zw_content
 
 
-pool = set()
-for filename in os.listdir("data_filter/xiaoxue"):
-	pool.add(filename.split('.')[0])
-
-
-userdict = loadUserDict()
-for filename in os.listdir("data/zuowen_xiaoxue"):
-	if filename.split('.')[0] in pool:
-		continue
+for filename in os.listdir("data/zuowen_gaozhong"):
 	print(filename)
-	html = open("data/zuowen_xiaoxue/" + filename).read()
+	html = open("data/zuowen_gaozhong/" + filename).read()
 	zw_title, zw_content = extractTitleAndContent(html)
-	match = []
-	for cy in userdict:
-		if cy in zw_content:
-			match.append(cy)
-	if len(match) > 0:
-		id = filename.split('.')[0]
-		df = open("data_filter/xiaoxue/%s.txt"%id, 'w')
-		df.write(' '.join(match) + "\n\n")
-		df.write(zw_title + "\n\n")
-		df.write(zw_content)
+	id = filename.split('.')[0]
+	df = open("LeLeKeTangZuoWen/gaozhong/%s.txt"%id, 'w')
+	df.write(zw_title.strip() + "\n")
+	df.write(zw_content.strip() + "\n")
+	df.close()

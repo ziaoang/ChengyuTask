@@ -4,33 +4,52 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
+import os
+import math
 import jieba
-jieba.load_userdict("../data/userdict.txt")
+from collections import defaultdict
+from gensim.models import Word2Vec
 
-import gensim, logging
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+window = 5
+size = 100
 
-def inner_product(a, b):
+def distance(a, b):
 	res = 0
 	for i in range(len(a)):
-		res += a[i] * b[i]
+		res += (a[i]-b[i])**2
 	return res
 
-model = gensim.models.Word2Vec.load("../leleketang/data_filter_seg_merge_split/w2v/all_vector_small_sg.txt")
+def cos(a, b):
+	ab = 0
+	aa = 0
+	bb = 0
+	for i in range(len(a)):
+		ab += a[i] * b[i]
+		aa += a[i] * a[i]
+		bb += b[i] * b[i]
+	return ab / (math.sqrt(aa)*math.sqrt(bb))
 
-window_size = 5
+context = {}
+#for line in open("data/context_cbow.txt"):
+for line in open("data/context_sg.txt"):
+	t = line.strip().split(" ")
+	cy = t[0]
+	vector = []
+	for i in range(1, size+1):
+		vector.append(float(t[i]))
+	context[cy] = vector
 
-total_cnt = 0
-right_cnt = 0
+#model = Word2Vec.load("data/w2v/cbow.txt")
+model = Word2Vec.load("data/w2v/sg.txt")
 
-cy_set = set()
+total = 0
+right = 0
 
-sf = open("dataset.txt")
+sf = open("../data/cy_question/data.txt")
 while(1):
 	line = sf.readline()
 	if not line:
 		break
-	#total_cnt += 1
 	q_raw = sf.readline().strip()
 	a = sf.readline().strip()
 	b = sf.readline().strip()
@@ -40,76 +59,38 @@ while(1):
 	sf.readline()
 	sf.readline()
 
-	cy_set.add(a)
-	cy_set.add(b)
-	cy_set.add(c)
-	cy_set.add(d)
+	seg_list = ("/ ".join(jieba.cut(q_raw))).encode("utf-8").split("/ ")
+	
+	for i in range(len(seg_list)):
+		if seg_list[i] == "______":
+			neighbor = []
+			for j in range(1, window+1):
+				if i-j >= 0:
+					neighbor.append(seg_list[i-j])
+				if i+j < len(seg_list):
+					neighbor.append(seg_list[i+j])
+			if len(neighbor) == 0:
+				continue
+			vector = [0.0] * size
+			for w in neighbor:
+				if w in model:
+					for j in range(size):
+						vector[j] += model[w][j]
+			for j in range(size):
+				vector[j] /= len(neighbor)
+			t = []
+			if a in context:
+				t.append(["A", distance(context[a], vector)])
+			if b in context:
+				t.append(["B", distance(context[b], vector)])
+			if c in context:
+				t.append(["C", distance(context[c], vector)])
+			if d in context:
+				t.append(["D", distance(context[d], vector)])
+			t.sort(key=lambda x:x[1], reverse=False)
+			total += 1
+			if answer == t[0][0]:
+				right += 1
 
-	seg_list = jieba.cut(q_raw)
-	q_split = ("/ ".join(seg_list)).encode("utf-8")
-	q_seg = q_split.split("/ ")
-
-	for i in range(len(q_seg)):
-		if q_seg[i] == '______':
-			context = []
-			for j in range(-window_size, window_size+1):
-				if j == 0 or i+j < 0 or i+j >= len(q_seg):
-					continue
-				w = q_seg[i+j]
-				if w not in model:
-					continue
-				if len(context) == 0:
-					for k in range(len(model[w])):
-						context.append(model[w][k])
-				else:
-					for k in range(len(model[w])):
-						context[i] += model[w][k]
-			if len(context) == 0: # no context can be used
-				if answer == "C":
-					right_cnt += 0
-			else:
-				res = []
-				if a in model:
-					res.append(["A", inner_product(model[a], context)])
-				if b in model:
-					res.append(["B", inner_product(model[b], context)])
-				if c in model:
-					res.append(["C", inner_product(model[c], context)])
-				if d in model:
-					res.append(["D", inner_product(model[d], context)])
-				if len(res) != 4:
-					if answer == "C":
-						right_cnt += 0
-				else:
-					res.sort(key=lambda x:x[1], reverse=True)
-					total_cnt += 1
-					if answer == res[0][0]:
-						right_cnt += 1
-					print(q_raw)
-					print("%s\t%.4f"%(a, inner_product(model[a], context)))
-					print("%s\t%.4f"%(b, inner_product(model[b], context)))
-					print("%s\t%.4f"%(c, inner_product(model[c], context)))
-					print("%s\t%.4f"%(d, inner_product(model[d], context)))
-					print(answer)
-					
-			break
-
-
-print(total_cnt)
-print(right_cnt)
-print((right_cnt+0.0)/total_cnt)
-
-print("------------")
-has_dict = {}
-for line in open("../leleketang/statistic/all.txt"):
-	t = line.strip().split("\t")
-	has_dict[t[0]] = int(t[1])
-a = 0
-b = 0
-for w in cy_set:
-	if w in has_dict:
-		a += 1
-		b += has_dict[w]
-print(len(cy_set))
-print(a)
-print(b/a)
+print(total)
+print(right)

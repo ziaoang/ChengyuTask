@@ -4,10 +4,6 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-import os
-from collections import defaultdict
-from gensim.models import Word2Vec
-
 cy_set = set()
 sf = open("../data/cy_question/data.txt")
 while(1):

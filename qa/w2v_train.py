@@ -9,20 +9,25 @@ import jieba
 from collections import defaultdict
 from gensim.models import Word2Vec
 
-cy_set = set()
-for line in open("data/cy.txt"):
-	cy_set.add(line.strip())
+sg = 0
+window = 5
+size = 100
 
 sentences = []
 for line in open("data/data_seg.txt"):
 	sentences.append(line.strip().split("/ "))
 
-#model = Word2Vec.load("data/w2v/cbow.txt")
-model = Word2Vec.load("data/w2v/sg.txt")
+model = Word2Vec(sentences, size=size, window=window, min_count=1, workers=4, sg=sg)
+if sg == 0:
+	model.save("data/w2v/cbow.txt")
+else:
+	model.save("data/w2v/sg.txt")
+
+cy_set = set()
+for line in open("data/cy.txt"):
+	cy_set.add(line.strip())
 
 context = defaultdict(list)
-window = 5
-size = 100
 
 for sentence in sentences:
 	for i in range(len(sentence)):
@@ -34,7 +39,6 @@ for sentence in sentences:
 				neighbor.append(sentence[i-j])
 			if i+j < len(sentence):
 				neighbor.append(sentence[i+j])
-		print(neighbor)
 		if len(neighbor) == 0:
 			continue
 		vector = [0.0] * size
@@ -48,13 +52,12 @@ for sentence in sentences:
 context_avg = {}
 for cy in cy_set:
 	context_avg[cy] = [0.0] * size
-	if len(context[cy]) == 0:
-		continue
-	for vector in context[cy]:
+	if len(context[cy]) > 0:
+		for vector in context[cy]:
+			for i in range(size):
+				context_avg[cy][i] += vector[i]
 		for i in range(size):
-			context_avg[cy][i] += vector[i]
-	for i in range(size):
-		context_avg[cy][i] /= len(context[cy])
+			context_avg[cy][i] /= len(context[cy])
 	out = "%s"%cy
 	for v in context_avg[cy]:
 		out += " %f"%v

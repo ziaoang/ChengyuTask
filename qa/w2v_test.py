@@ -10,7 +10,7 @@ import jieba
 from collections import defaultdict
 from gensim.models import Word2Vec
 
-sg = 0
+sg = 1
 cos = 0
 window = 5
 size = 100
@@ -34,10 +34,10 @@ def cos(a, b):
 question_filename = "../data/cy_question/data.txt"
 
 if sg == 0:
-	context_filename = "data/context_cbow.txt"
+	context_filename = "data/w2v/context_cbow.txt"
 	model = Word2Vec.load("data/w2v/cbow.txt")
 else:
-	context_filename = "data/context_sg.txt"
+	context_filename = "data/w2v/context_sg.txt"
 	model = Word2Vec.load("data/w2v/sg.txt")
 
 context = {}
@@ -69,7 +69,7 @@ while(1):
 	sf.readline()
 
 	seg_list = ("/ ".join(jieba.cut(q_raw))).encode("utf-8").split("/ ")
-	index = seg_list.find("______")
+	index = seg_list.index("______")
 	neighbor = []
 	for offset in range(1, window+1):
 		if index-offset >= 0:
@@ -91,16 +91,24 @@ while(1):
 	
 	t = []
 	if cos == 0:
-		t.append(["A", distance(context[a], vector)])
-		t.append(["B", distance(context[b], vector)])
-		t.append(["C", distance(context[c], vector)])
-		t.append(["D", distance(context[d], vector)])
+		if a in context:
+			t.append(["A", distance(context[a], vector)])
+		if b in context:
+			t.append(["B", distance(context[b], vector)])
+		if c in context:
+			t.append(["C", distance(context[c], vector)])
+		if d in context:
+			t.append(["D", distance(context[d], vector)])
 		t.sort(key=lambda x:x[1], reverse=False)
 	else:
-		t.append(["A", cos(context[a], vector)])
-		t.append(["B", cos(context[b], vector)])
-		t.append(["C", cos(context[c], vector)])
-		t.append(["D", cos(context[d], vector)])
+		if a in context:
+			t.append(["A", cos(context[a], vector)])
+		if b in context:
+			t.append(["B", cos(context[b], vector)])
+		if c in context:
+			t.append(["C", cos(context[c], vector)])
+		if d in context:
+			t.append(["D", cos(context[d], vector)])
 		t.sort(key=lambda x:x[1], reverse=True)
 
 	total += 1

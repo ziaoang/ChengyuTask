@@ -9,7 +9,7 @@ import jieba
 from collections import defaultdict
 from gensim.models import Word2Vec
 
-sg = 0
+sg = 1
 window = 5
 size = 100
 
@@ -52,12 +52,13 @@ for sentence in sentences:
 context_avg = {}
 for cy in cy_set:
 	context_avg[cy] = [0.0] * size
-	if len(context[cy]) > 0:
-		for vector in context[cy]:
-			for i in range(size):
-				context_avg[cy][i] += vector[i]
+	if len(context[cy]) == 0:
+		continue
+	for vector in context[cy]:
 		for i in range(size):
-			context_avg[cy][i] /= len(context[cy])
+			context_avg[cy][i] += vector[i]
+	for i in range(size):
+		context_avg[cy][i] /= len(context[cy])
 	out = "%s"%cy
 	for v in context_avg[cy]:
 		out += " %f"%v
